@@ -3,6 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   Clapperboard,
+  Compass,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/analisis", label: "Análisis", icon: Radar, exact: false },
+  { to: "/app/estrategia", label: "Estrategia", icon: Compass, exact: false },
   { to: "/app/calendario", label: "Calendario", icon: CalendarDays, exact: false },
   { to: "/app/copies", label: "Copies", icon: PenLine, exact: false },
   { to: "/app/scripts", label: "Guiones", icon: Clapperboard, exact: false },

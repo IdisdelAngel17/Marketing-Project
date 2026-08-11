@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   Clapperboard,
+  Compass,
   PenLine,
   Radar,
   Sparkles,
@@ -28,6 +29,12 @@ const tools = [
     icon: Radar,
     title: "Análisis de perfil",
     text: "Pega el link de una red social y recibe áreas de oportunidad con consejos.",
+  },
+  {
+    to: "/app/estrategia",
+    icon: Compass,
+    title: "Estrategia de contenido",
+    text: "Plan por perfil, red y objetivo, con insights de marketing.",
   },
   {
     to: "/app/calendario",

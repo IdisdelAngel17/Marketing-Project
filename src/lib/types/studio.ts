@@ -256,3 +256,57 @@ export const PILLAR_LABELS: Record<ContentPillar, string> = {
   bastidores: "Bastidores",
   promocion: "Promoción",
 };
+
+export interface StrategyRequest {
+  profileName: string;
+  handle: string;
+  niche: string;
+  audience: string;
+  network: SocialNetwork;
+  goal: CopyGoal;
+  offer?: string;
+  notes?: string;
+}
+
+export interface StrategyPillar {
+  name: string;
+  share: number;
+  purpose: string;
+  formats: string[];
+  examples: string[];
+}
+
+export interface StrategyPhase {
+  name: string;
+  weeks: string;
+  focus: string;
+  actions: string[];
+}
+
+export interface MarketingInsight {
+  id: string;
+  category: string;
+  title: string;
+  insight: string;
+  howToUse: string;
+}
+
+export interface ContentStrategy {
+  id: string;
+  profileName: string;
+  handle: string;
+  network: SocialNetwork;
+  goal: CopyGoal;
+  positioning: string;
+  promise: string;
+  audienceSnapshot: string;
+  northStarMetric: string;
+  kpis: string[];
+  cadence: string;
+  mix: StrategyPillar[];
+  funnel: { stage: string; job: string; content: string }[];
+  phases: StrategyPhase[];
+  ctas: string[];
+  risks: string[];
+  insights: MarketingInsight[];
+}

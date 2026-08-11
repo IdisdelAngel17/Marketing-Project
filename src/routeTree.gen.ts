@@ -17,6 +17,7 @@ import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppAnalisisRouteImport } from './routes/app/analisis'
 import { Route as AppCalendarioRouteImport } from './routes/app/calendario'
 import { Route as AppCopiesRouteImport } from './routes/app/copies'
+import { Route as AppEstrategiaRouteImport } from './routes/app/estrategia'
 import { Route as AppReportsRouteImport } from './routes/app/reports'
 import { Route as AppScriptsRouteImport } from './routes/app/scripts'
 import { Route as AppUsuariosRouteImport } from './routes/app/usuarios'
@@ -61,6 +62,11 @@ const AppCopiesRoute = AppCopiesRouteImport.update({
   path: '/copies',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEstrategiaRoute = AppEstrategiaRouteImport.update({
+  id: '/estrategia',
+  path: '/estrategia',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppReportsRoute = AppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
   '/app/copies': typeof AppCopiesRoute
+  '/app/estrategia': typeof AppEstrategiaRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
   '/app/copies': typeof AppCopiesRoute
+  '/app/estrategia': typeof AppEstrategiaRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
   '/app/copies': typeof AppCopiesRoute
+  '/app/estrategia': typeof AppEstrategiaRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/app/analisis'
     | '/app/calendario'
     | '/app/copies'
+    | '/app/estrategia'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/app/analisis'
     | '/app/calendario'
     | '/app/copies'
+    | '/app/estrategia'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/app/analisis'
     | '/app/calendario'
     | '/app/copies'
+    | '/app/estrategia'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCopiesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/estrategia': {
+      id: '/app/estrategia'
+      path: '/estrategia'
+      fullPath: '/app/estrategia'
+      preLoaderRoute: typeof AppEstrategiaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/reports': {
       id: '/app/reports'
       path: '/reports'
@@ -250,6 +269,7 @@ interface AppRouteChildren {
   AppAnalisisRoute: typeof AppAnalisisRoute
   AppCalendarioRoute: typeof AppCalendarioRoute
   AppCopiesRoute: typeof AppCopiesRoute
+  AppEstrategiaRoute: typeof AppEstrategiaRoute
   AppReportsRoute: typeof AppReportsRoute
   AppScriptsRoute: typeof AppScriptsRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
@@ -260,6 +280,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnalisisRoute: AppAnalisisRoute,
   AppCalendarioRoute: AppCalendarioRoute,
   AppCopiesRoute: AppCopiesRoute,
+  AppEstrategiaRoute: AppEstrategiaRoute,
   AppReportsRoute: AppReportsRoute,
   AppScriptsRoute: AppScriptsRoute,
   AppUsuariosRoute: AppUsuariosRoute,

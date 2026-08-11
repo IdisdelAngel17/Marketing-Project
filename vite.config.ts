@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Render (y cualquier VPS Node) necesita el preset node-server, no Cloudflare.
+  nitro: {
+    preset: "node-server",
+  },
 });
