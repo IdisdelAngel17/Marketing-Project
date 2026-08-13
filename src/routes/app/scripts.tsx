@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Clapperboard, Loader2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CopyButton } from "@/components/app/copy-button";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { clientSearchSchema } from "@/lib/crm/search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +35,7 @@ import {
 } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/scripts")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Guiones de video | Community Manager IA" }],
   }),
@@ -41,6 +44,10 @@ export const Route = createFileRoute("/app/scripts")({
 
 function ScriptsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [format, setFormat] = useState<VideoFormat>("reels");
   const [duration, setDuration] = useState<VideoDuration>("30");
   const [tone, setTone] = useState<Tone>("directo");
@@ -51,8 +58,8 @@ function ScriptsPage() {
 
   useEffect(() => {
     if (!user) return;
-    void listSavedScripts(user.id).then(setHistory).catch(() => setHistory([]));
-  }, [user]);
+    void listSavedScripts(user.id, clientId).then(setHistory).catch(() => setHistory([]));
+  }, [user, clientId]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -73,7 +80,7 @@ function ScriptsPage() {
     setScript(generated);
     if (user) {
       try {
-        const saved = await saveGeneratedScript(request, generated, user.id);
+        const saved = await saveGeneratedScript(request, generated, user.id, clientId);
         setHistory((prev) => [saved, ...prev].slice(0, 20));
         toast.success("Guion creado y guardado");
       } catch (err) {
@@ -110,14 +117,25 @@ function ScriptsPage() {
       title="Guiones para videos"
       description="Arma el guion por escenas: hook, visual, voz y texto en pantalla."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <form
           onSubmit={onSubmit}
           className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/scripts", search: { client: id } })}
+          />
           <div className="space-y-2">
             <Label htmlFor="brand">Marca o cliente</Label>
-            <Input id="brand" name="brand" required defaultValue="Marca Demo" />
+            <Input
+              id="brand"
+              name="brand"
+              required
+              key={activeClient?.id || "brand"}
+              defaultValue={activeClient?.brand || activeClient?.name || "Marca Demo"}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

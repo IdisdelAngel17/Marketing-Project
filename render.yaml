@@ -10,3 +10,11 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      - key: VITE_SUPABASE_URL
+        value: "https://bmsmxierdyyupszrtuvm.supabase.co"
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_RESEND_API_KEY
+        sync: false
+      - key: VITE_RESEND_FROM
+        value: "Community Manager IA <beth.t@example.com>"

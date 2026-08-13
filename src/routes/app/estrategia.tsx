@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Compass,
   Lightbulb,
@@ -7,11 +7,15 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CopyButton } from "@/components/app/copy-button";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { useAuth } from "@/lib/auth/auth-context";
+import { clientSearchSchema } from "@/lib/crm/search";
+import { saveClientStrategy } from "@/lib/crm/store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +37,7 @@ import type { ContentStrategy, CopyGoal, SocialNetwork } from "@/lib/types/studi
 import { GOAL_LABELS, NETWORK_LABELS } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/estrategia")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Estrategia | Community Manager IA" }],
   }),
@@ -40,10 +45,19 @@ export const Route = createFileRoute("/app/estrategia")({
 });
 
 function StrategyPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [network, setNetwork] = useState<SocialNetwork>("instagram");
   const [goal, setGoal] = useState<CopyGoal>("leads");
   const [loading, setLoading] = useState(false);
   const [strategy, setStrategy] = useState<ContentStrategy | null>(null);
+
+  useEffect(() => {
+    if (activeClient?.networks[0]) setNetwork(activeClient.networks[0].network);
+  }, [activeClient?.id]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -62,7 +76,10 @@ function StrategyPage() {
         goal,
       });
       setStrategy(result);
-      toast.success("Estrategia lista");
+      if (user && clientId) {
+        await saveClientStrategy(user.id, clientId, result);
+      }
+      toast.success(clientId ? "Estrategia guardada en el CRM" : "Estrategia lista");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar");
     } finally {
@@ -75,11 +92,16 @@ function StrategyPage() {
       title="Estrategia de contenido"
       description="Arma el plan según el perfil, la red social y el objetivo, con insights de marketing."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-8 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.22fr)]">
         <form
           onSubmit={onSubmit}
           className="h-fit space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/estrategia", search: { client: id } })}
+          />
           <div className="flex items-center gap-3">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/40">
               <Compass className="h-5 w-5 text-primary-foreground" />
@@ -99,13 +121,20 @@ function StrategyPage() {
                 id="profileName"
                 name="profileName"
                 required
-                defaultValue="Marca Demo"
+                key={activeClient?.id || "profileName"}
+                defaultValue={activeClient?.brand || activeClient?.name || "Marca Demo"}
                 placeholder="Ej. Estudio Norte"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="handle">Handle</Label>
-              <Input id="handle" name="handle" defaultValue="marca.demo" placeholder="sin @" />
+              <Input
+                id="handle"
+                name="handle"
+                key={`${activeClient?.id || "handle"}-h`}
+                defaultValue={activeClient?.networks[0]?.handle || "marca.demo"}
+                placeholder="sin @"
+              />
             </div>
           </div>
 
@@ -114,7 +143,8 @@ function StrategyPage() {
             <Input
               id="niche"
               name="niche"
-              defaultValue="agencias y community managers"
+              key={`${activeClient?.id || "niche"}-n`}
+              defaultValue={activeClient?.industry || "agencias y community managers"}
               placeholder="Ej. clínicas dentales"
             />
           </div>

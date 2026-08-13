@@ -16,6 +16,7 @@ import {
   Clapperboard,
 } from "lucide-react";
 
+import { LeadForm } from "@/components/leads/lead-form";
 import heroBoard from "@/assets/hero-board.jpg";
 
 const WHATSAPP_NUMBER = "6141829146";
@@ -179,6 +180,9 @@ function Landing() {
             <a href="#planes" className="transition-colors hover:text-foreground">
               Planes
             </a>
+            <a href="#contacto" className="transition-colors hover:text-foreground">
+              Contacto
+            </a>
             <Link to="/iniciar-sesion" className="transition-colors hover:text-foreground">
               Iniciar sesión
             </Link>
@@ -322,16 +326,14 @@ function Landing() {
                   ))}
                 </ul>
                 <a
-                  href={WHATSAPP_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#contacto"
                   className={
                     p.featured
                       ? "mt-7 inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
                       : "mt-7 inline-flex w-full items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-surface-2"
                   }
                 >
-                  Solicitar por WhatsApp
+                  Solicitar este plan
                 </a>
               </article>
             ))}
@@ -339,21 +341,30 @@ function Landing() {
         </section>
 
         <section id="contacto" className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-5 py-20 text-center">
-            <h2 className="text-3xl font-bold md:text-4xl">Hablemos de tus cuentas</h2>
-            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Te muestro el tablero funcionando con el calendario de una de tus marcas. Respuesta
-              directa por WhatsApp.
-            </p>
-            <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              <MessageCircle className="h-5 w-5" />
-              614 182 9146
-            </a>
+          <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <div>
+              <h2 className="text-3xl font-bold md:text-4xl">Hablemos de tus cuentas</h2>
+              <p className="mt-4 max-w-xl text-muted-foreground">
+                Déjanos tus datos y te mostramos el tablero con el calendario de una de tus marcas.
+                También puedes escribir por WhatsApp.
+              </p>
+              <a
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-3 rounded-full border border-border px-5 py-3 text-sm font-medium transition-colors hover:bg-surface-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp {WHATSAPP_NUMBER}
+              </a>
+            </div>
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <h3 className="font-semibold">Solicitar demo</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Completa el formulario y llega directo al inbox de leads.
+              </p>
+              <LeadForm className="mt-5" defaultInterest="demo" />
+            </div>
           </div>
         </section>
       </main>

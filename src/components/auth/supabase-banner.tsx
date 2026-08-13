@@ -21,11 +21,12 @@ export function SupabaseConfigBanner() {
             <code className="rounded bg-surface px-1.5 py-0.5 text-xs">npm run dev</code>.
           </p>
           <p className="mt-2 text-muted-foreground">
-            También ejecuta el SQL de{" "}
-            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">
-              supabase/migrations/001_profiles.sql
-            </code>{" "}
-            en el SQL Editor.
+            También ejecuta en el SQL Editor{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">001_profiles.sql</code>,{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">002_studio.sql</code>,{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">003_clients.sql</code> y{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">004_mails.sql</code> y{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs">005_leads.sql</code>.
           </p>
           <Link
             to="/"

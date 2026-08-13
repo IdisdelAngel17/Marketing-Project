@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, Sparkles } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CopyButton } from "@/components/app/copy-button";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { clientSearchSchema } from "@/lib/crm/search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +34,7 @@ import {
 } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/copies")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Copies de publicaciones | Community Manager IA" }],
   }),
@@ -40,6 +43,10 @@ export const Route = createFileRoute("/app/copies")({
 
 function CopiesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [network, setNetwork] = useState<SocialNetwork>("instagram");
   const [tone, setTone] = useState<Tone>("cercano");
   const [goal, setGoal] = useState<CopyGoal>("engagement");
@@ -49,8 +56,12 @@ function CopiesPage() {
 
   useEffect(() => {
     if (!user) return;
-    void listSavedCopies(user.id).then(setHistory).catch(() => setHistory([]));
-  }, [user]);
+    void listSavedCopies(user.id, clientId).then(setHistory).catch(() => setHistory([]));
+  }, [user, clientId]);
+
+  useEffect(() => {
+    if (activeClient?.networks[0]) setNetwork(activeClient.networks[0].network);
+  }, [activeClient?.id]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -71,7 +82,7 @@ function CopiesPage() {
     setResults(copies);
     if (user) {
       try {
-        const saved = await saveGeneratedCopies(request, copies, user.id);
+        const saved = await saveGeneratedCopies(request, copies, user.id, clientId);
         setHistory((prev) => [...saved, ...prev].slice(0, 30));
         toast.success("Copies creados y guardados");
       } catch (err) {
@@ -86,14 +97,26 @@ function CopiesPage() {
       title="Copies de publicaciones"
       description="Genera 3 variantes listas para publicar según red, tono y objetivo."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <form
           onSubmit={onSubmit}
           className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/copies", search: { client: id } })}
+          />
           <div className="space-y-2">
             <Label htmlFor="brand">Marca o cliente</Label>
-            <Input id="brand" name="brand" placeholder="Ej. Estudio Norte" required defaultValue="Marca Demo" />
+            <Input
+              id="brand"
+              name="brand"
+              placeholder="Ej. Estudio Norte"
+              required
+              key={activeClient?.id || "brand"}
+              defaultValue={activeClient?.brand || activeClient?.name || "Marca Demo"}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

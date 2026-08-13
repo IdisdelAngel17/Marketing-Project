@@ -2,18 +2,26 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   BarChart3,
+  Building2,
   CalendarDays,
   Clapperboard,
   Compass,
+  Film,
+  Mail,
   PenLine,
   Radar,
   Sparkles,
+  Target,
   Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { SupabaseConfigBanner } from "@/components/auth/supabase-banner";
 import { useAuth } from "@/lib/auth/auth-context";
+import { listClients } from "@/lib/crm/store";
+import type { Client } from "@/lib/crm/types";
+import { listLeads } from "@/lib/leads/store";
 import { weeklyReports } from "@/data/weekly-reports";
 
 export const Route = createFileRoute("/app/")({
@@ -24,6 +32,18 @@ export const Route = createFileRoute("/app/")({
 });
 
 const tools = [
+  {
+    to: "/app/clientes",
+    icon: Building2,
+    title: "CRM de clientes",
+    text: "Ficha completa: redes, análisis, estrategia, calendario, copies, guiones y reportes.",
+  },
+  {
+    to: "/app/leads",
+    icon: Target,
+    title: "Leads",
+    text: "Inbox de solicitudes de la landing. Contacta y convierte a cliente.",
+  },
   {
     to: "/app/analisis",
     icon: Radar,
@@ -55,15 +75,29 @@ const tools = [
     text: "Estructura hooks, escenas, texto en pantalla y CTA para Reels, TikTok o Shorts.",
   },
   {
+    to: "/app/editor",
+    icon: Film,
+    title: "Editor de video",
+    text: "Sube un clip, subtitúlalo, aplica zooms y recibe feedback del corte final.",
+  },
+  {
     to: "/app/reports",
     icon: BarChart3,
     title: "Reportes semanales",
     text: "Revisa el desempeño por red social y el detalle de cada publicación.",
   },
+  {
+    to: "/app/correos",
+    icon: Mail,
+    title: "Correos con Resend",
+    text: "Escribe a clientes o al equipo con plantillas y historial por ficha CRM.",
+  },
 ] as const;
 
 function DashboardPage() {
   const { user, users, isAdmin } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [newLeads, setNewLeads] = useState(0);
   const latest = weeklyReports[0]!;
   const totalReach = latest.networks.reduce((acc, n) => acc + n.reach, 0);
   const avgEng =
@@ -72,13 +106,21 @@ function DashboardPage() {
 
   const firstName = user?.name.split(/\s+/)[0] ?? "hola";
 
+  useEffect(() => {
+    if (!user) return;
+    void listClients(user.id).then(setClients).catch(() => setClients([]));
+    void listLeads()
+      .then((rows) => setNewLeads(rows.filter((l) => l.status === "new").length))
+      .catch(() => setNewLeads(0));
+  }, [user]);
+
   return (
     <AppShell
       title={`Hola, ${firstName}`}
       description={`Dashboard de ${user?.agency ?? "tu agencia"} · ${user?.email ?? ""}`}
     >
       <SupabaseConfigBanner />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {[
           {
             label: "Alcance semanal",
@@ -93,8 +135,12 @@ function DashboardPage() {
             value: String(latest.posts.length),
           },
           {
-            label: "Usuarios del equipo",
-            value: String(users.length),
+            label: "Clientes CRM",
+            value: String(clients.length),
+          },
+          {
+            label: "Leads nuevos",
+            value: String(newLeads),
           },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-3xl border border-border bg-card p-5 shadow-sm">
@@ -105,6 +151,43 @@ function DashboardPage() {
           </div>
         ))}
       </div>
+
+      <section className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Clientes</h2>
+            <p className="text-sm text-muted-foreground">Entra al perfil CRM de cada marca.</p>
+          </div>
+          <div className="flex gap-4 text-sm font-medium">
+            <Link to="/app/leads" className="underline-offset-4 hover:underline">
+              Ver leads
+            </Link>
+            <Link to="/app/clientes" className="underline-offset-4 hover:underline">
+              Ver todos
+            </Link>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {clients.slice(0, 3).map((client) => (
+            <Link
+              key={client.id}
+              to="/app/clientes/$clientId"
+              params={{ clientId: client.id }}
+              className="rounded-2xl bg-surface-2/80 px-4 py-3 text-sm"
+            >
+              <p className="font-medium">{client.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {client.networks.length} redes · {client.industry || "Sin industria"}
+              </p>
+            </Link>
+          ))}
+          {clients.length === 0 ? (
+            <Link to="/app/clientes" className="rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+              Agrega tu primer cliente
+            </Link>
+          ) : null}
+        </div>
+      </section>
 
       <section className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">

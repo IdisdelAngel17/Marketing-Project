@@ -1,11 +1,15 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
+  Building2,
   CalendarDays,
   Clapperboard,
   Compass,
+  Film,
   LayoutDashboard,
   LogOut,
+  Mail,
+  Target,
   Menu,
   PenLine,
   Radar,
@@ -23,12 +27,16 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/app/clientes", label: "Clientes", icon: Building2, exact: false },
+  { to: "/app/leads", label: "Leads", icon: Target, exact: false },
   { to: "/app/analisis", label: "Análisis", icon: Radar, exact: false },
   { to: "/app/estrategia", label: "Estrategia", icon: Compass, exact: false },
   { to: "/app/calendario", label: "Calendario", icon: CalendarDays, exact: false },
   { to: "/app/copies", label: "Copies", icon: PenLine, exact: false },
   { to: "/app/scripts", label: "Guiones", icon: Clapperboard, exact: false },
+  { to: "/app/editor", label: "Editor", icon: Film, exact: false },
   { to: "/app/reports", label: "Reportes", icon: BarChart3, exact: false },
+  { to: "/app/correos", label: "Correos", icon: Mail, exact: false },
   { to: "/app/usuarios", label: "Usuarios", icon: Users, exact: false, adminOnly: true },
 ] as const;
 

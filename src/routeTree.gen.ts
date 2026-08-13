@@ -16,11 +16,17 @@ import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppAnalisisRouteImport } from './routes/app/analisis'
 import { Route as AppCalendarioRouteImport } from './routes/app/calendario'
+import { Route as AppClientesRouteImport } from './routes/app/clientes'
 import { Route as AppCopiesRouteImport } from './routes/app/copies'
+import { Route as AppCorreosRouteImport } from './routes/app/correos'
+import { Route as AppEditorRouteImport } from './routes/app/editor'
 import { Route as AppEstrategiaRouteImport } from './routes/app/estrategia'
+import { Route as AppLeadsRouteImport } from './routes/app/leads'
 import { Route as AppReportsRouteImport } from './routes/app/reports'
 import { Route as AppScriptsRouteImport } from './routes/app/scripts'
 import { Route as AppUsuariosRouteImport } from './routes/app/usuarios'
+import { Route as AppClientesIndexRouteImport } from './routes/app/clientes/index'
+import { Route as AppClientesClientIdRouteImport } from './routes/app/clientes/$clientId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,14 +63,34 @@ const AppCalendarioRoute = AppCalendarioRouteImport.update({
   path: '/calendario',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientesRoute = AppClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCopiesRoute = AppCopiesRouteImport.update({
   id: '/copies',
   path: '/copies',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCorreosRoute = AppCorreosRouteImport.update({
+  id: '/correos',
+  path: '/correos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEditorRoute = AppEditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEstrategiaRoute = AppEstrategiaRouteImport.update({
   id: '/estrategia',
   path: '/estrategia',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadsRoute = AppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReportsRoute = AppReportsRouteImport.update({
@@ -82,6 +108,16 @@ const AppUsuariosRoute = AppUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientesIndexRoute = AppClientesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppClientesRoute,
+} as any)
+const AppClientesClientIdRoute = AppClientesClientIdRouteImport.update({
+  id: '/$clientId',
+  path: '/$clientId',
+  getParentRoute: () => AppClientesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,12 +126,18 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
+  '/app/clientes': typeof AppClientesRouteWithChildren
   '/app/copies': typeof AppCopiesRoute
+  '/app/correos': typeof AppCorreosRoute
+  '/app/editor': typeof AppEditorRoute
   '/app/estrategia': typeof AppEstrategiaRoute
+  '/app/leads': typeof AppLeadsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
   '/app/': typeof AppIndexRoute
+  '/app/clientes/$clientId': typeof AppClientesClientIdRoute
+  '/app/clientes/': typeof AppClientesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,11 +146,16 @@ export interface FileRoutesByTo {
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
   '/app/copies': typeof AppCopiesRoute
+  '/app/correos': typeof AppCorreosRoute
+  '/app/editor': typeof AppEditorRoute
   '/app/estrategia': typeof AppEstrategiaRoute
+  '/app/leads': typeof AppLeadsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
   '/app': typeof AppIndexRoute
+  '/app/clientes/$clientId': typeof AppClientesClientIdRoute
+  '/app/clientes': typeof AppClientesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,12 +165,18 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/app/analisis': typeof AppAnalisisRoute
   '/app/calendario': typeof AppCalendarioRoute
+  '/app/clientes': typeof AppClientesRouteWithChildren
   '/app/copies': typeof AppCopiesRoute
+  '/app/correos': typeof AppCorreosRoute
+  '/app/editor': typeof AppEditorRoute
   '/app/estrategia': typeof AppEstrategiaRoute
+  '/app/leads': typeof AppLeadsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/scripts': typeof AppScriptsRoute
   '/app/usuarios': typeof AppUsuariosRoute
   '/app/': typeof AppIndexRoute
+  '/app/clientes/$clientId': typeof AppClientesClientIdRoute
+  '/app/clientes/': typeof AppClientesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,12 +187,18 @@ export interface FileRouteTypes {
     | '/registro'
     | '/app/analisis'
     | '/app/calendario'
+    | '/app/clientes'
     | '/app/copies'
+    | '/app/correos'
+    | '/app/editor'
     | '/app/estrategia'
+    | '/app/leads'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
     | '/app/'
+    | '/app/clientes/$clientId'
+    | '/app/clientes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,11 +207,16 @@ export interface FileRouteTypes {
     | '/app/analisis'
     | '/app/calendario'
     | '/app/copies'
+    | '/app/correos'
+    | '/app/editor'
     | '/app/estrategia'
+    | '/app/leads'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
     | '/app'
+    | '/app/clientes/$clientId'
+    | '/app/clientes'
   id:
     | '__root__'
     | '/'
@@ -161,12 +225,18 @@ export interface FileRouteTypes {
     | '/registro'
     | '/app/analisis'
     | '/app/calendario'
+    | '/app/clientes'
     | '/app/copies'
+    | '/app/correos'
+    | '/app/editor'
     | '/app/estrategia'
+    | '/app/leads'
     | '/app/reports'
     | '/app/scripts'
     | '/app/usuarios'
     | '/app/'
+    | '/app/clientes/$clientId'
+    | '/app/clientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -227,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCalendarioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/clientes': {
+      id: '/app/clientes'
+      path: '/clientes'
+      fullPath: '/app/clientes'
+      preLoaderRoute: typeof AppClientesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/copies': {
       id: '/app/copies'
       path: '/copies'
@@ -234,11 +311,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCopiesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/correos': {
+      id: '/app/correos'
+      path: '/correos'
+      fullPath: '/app/correos'
+      preLoaderRoute: typeof AppCorreosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/editor': {
+      id: '/app/editor'
+      path: '/editor'
+      fullPath: '/app/editor'
+      preLoaderRoute: typeof AppEditorRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/estrategia': {
       id: '/app/estrategia'
       path: '/estrategia'
       fullPath: '/app/estrategia'
       preLoaderRoute: typeof AppEstrategiaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/leads': {
+      id: '/app/leads'
+      path: '/leads'
+      fullPath: '/app/leads'
+      preLoaderRoute: typeof AppLeadsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/reports': {
@@ -262,14 +360,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsuariosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/clientes/': {
+      id: '/app/clientes/'
+      path: '/'
+      fullPath: '/app/clientes/'
+      preLoaderRoute: typeof AppClientesIndexRouteImport
+      parentRoute: typeof AppClientesRoute
+    }
+    '/app/clientes/$clientId': {
+      id: '/app/clientes/$clientId'
+      path: '/$clientId'
+      fullPath: '/app/clientes/$clientId'
+      preLoaderRoute: typeof AppClientesClientIdRouteImport
+      parentRoute: typeof AppClientesRoute
+    }
   }
 }
+
+interface AppClientesRouteChildren {
+  AppClientesClientIdRoute: typeof AppClientesClientIdRoute
+  AppClientesIndexRoute: typeof AppClientesIndexRoute
+}
+
+const AppClientesRouteChildren: AppClientesRouteChildren = {
+  AppClientesClientIdRoute: AppClientesClientIdRoute,
+  AppClientesIndexRoute: AppClientesIndexRoute,
+}
+
+const AppClientesRouteWithChildren = AppClientesRoute._addFileChildren(
+  AppClientesRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAnalisisRoute: typeof AppAnalisisRoute
   AppCalendarioRoute: typeof AppCalendarioRoute
+  AppClientesRoute: typeof AppClientesRouteWithChildren
   AppCopiesRoute: typeof AppCopiesRoute
+  AppCorreosRoute: typeof AppCorreosRoute
+  AppEditorRoute: typeof AppEditorRoute
   AppEstrategiaRoute: typeof AppEstrategiaRoute
+  AppLeadsRoute: typeof AppLeadsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppScriptsRoute: typeof AppScriptsRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
@@ -279,8 +409,12 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAnalisisRoute: AppAnalisisRoute,
   AppCalendarioRoute: AppCalendarioRoute,
+  AppClientesRoute: AppClientesRouteWithChildren,
   AppCopiesRoute: AppCopiesRoute,
+  AppCorreosRoute: AppCorreosRoute,
+  AppEditorRoute: AppEditorRoute,
   AppEstrategiaRoute: AppEstrategiaRoute,
+  AppLeadsRoute: AppLeadsRoute,
   AppReportsRoute: AppReportsRoute,
   AppScriptsRoute: AppScriptsRoute,
   AppUsuariosRoute: AppUsuariosRoute,

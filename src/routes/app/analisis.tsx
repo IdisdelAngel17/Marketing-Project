@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ExternalLink,
   Lightbulb,
@@ -7,11 +7,15 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CopyButton } from "@/components/app/copy-button";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { useAuth } from "@/lib/auth/auth-context";
+import { clientSearchSchema } from "@/lib/crm/search";
+import { saveClientAnalysis } from "@/lib/crm/store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +41,7 @@ import type {
 import { GOAL_LABELS, NETWORK_LABELS } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/analisis")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Análisis de perfil | Community Manager IA" }],
   }),
@@ -66,9 +71,22 @@ function priorityLabel(priority: OpportunityPriority) {
 }
 
 function AnalysisPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [goal, setGoal] = useState<CopyGoal>("engagement");
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ProfileAnalysis | null>(null);
+  const [selectedNetworkId, setSelectedNetworkId] = useState<string>("");
+
+  useEffect(() => {
+    setSelectedNetworkId(activeClient?.networks[0]?.id ?? "");
+  }, [activeClient?.id]);
+
+  const selectedNetwork =
+    activeClient?.networks.find((n) => n.id === selectedNetworkId) ?? activeClient?.networks[0];
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -83,7 +101,10 @@ function AnalysisPage() {
         goal,
       });
       setAnalysis(result);
-      toast.success("Análisis listo");
+      if (user && clientId) {
+        await saveClientAnalysis(user.id, clientId, result);
+      }
+      toast.success(clientId ? "Análisis listo y guardado en el CRM" : "Análisis listo");
     } catch (err) {
       setAnalysis(null);
       toast.error(
@@ -103,11 +124,16 @@ function AnalysisPage() {
       title="Análisis de perfil"
       description="Pega el link de una red social y obtén áreas de oportunidad con consejos accionables."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)]">
         <form
           onSubmit={onSubmit}
           className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/analisis", search: { client: id } })}
+          />
           <div className="flex items-center gap-3">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/40">
               <Radar className="h-5 w-5 text-primary-foreground" />
@@ -128,9 +154,29 @@ function AnalysisPage() {
               type="url"
               required
               placeholder="https://instagram.com/tu_marca"
-              defaultValue="https://instagram.com/comunidad.demo"
+              key={`${activeClient?.id || "url"}-${selectedNetwork?.id || "demo"}`}
+              defaultValue={selectedNetwork?.url || "https://instagram.com/comunidad.demo"}
             />
           </div>
+          {activeClient?.networks.length ? (
+            <div className="flex flex-wrap gap-2">
+              {activeClient.networks.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => setSelectedNetworkId(n.id)}
+                  className={`rounded-full border px-3 py-1 text-xs ${
+                    selectedNetwork?.id === n.id
+                      ? "border-primary bg-primary/20 font-medium"
+                      : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {NETWORK_LABELS[n.network]}
+                  {n.handle ? ` · @${n.handle}` : ""}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -138,6 +184,8 @@ function AnalysisPage() {
               <Input
                 id="niche"
                 name="niche"
+                key={`${activeClient?.id || "niche"}-n`}
+                defaultValue={activeClient?.industry || ""}
                 placeholder="Ej. agencias, clínicas, foodie"
               />
             </div>
@@ -163,6 +211,8 @@ function AnalysisPage() {
             <Textarea
               id="notes"
               name="notes"
+              key={`${activeClient?.id || "notes"}-notes`}
+              defaultValue={activeClient?.notes || ""}
               placeholder="Ej. publicamos 2 veces por semana, queremos más leads por WhatsApp"
               className="min-h-24"
             />

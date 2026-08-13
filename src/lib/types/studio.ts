@@ -103,6 +103,7 @@ export interface WeeklyReport {
   startDate: string;
   endDate: string;
   client: string;
+  clientId?: string;
   networks: NetworkWeeklySummary[];
   posts: PostPerformance[];
   highlights: string[];

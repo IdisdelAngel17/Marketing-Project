@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -6,6 +6,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { clientSearchSchema } from "@/lib/crm/search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +47,7 @@ import {
 import { NETWORK_LABELS, type PostPerformance, type SocialNetwork, type WeeklyReport } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/reports")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Reportes semanales | Community Manager IA" }],
   }),
@@ -81,6 +84,10 @@ function slugId(prefix: string) {
 
 function ReportsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [saved, setSaved] = useState<WeeklyReport[]>([]);
   const [weekId, setWeekId] = useState("");
   const [networkFilter, setNetworkFilter] = useState<SocialNetwork | "all">("all");
@@ -88,19 +95,19 @@ function ReportsPage() {
   const [savingReport, setSavingReport] = useState(false);
   const [savingPost, setSavingPost] = useState(false);
 
-  const allReports = saved.length ? saved : weeklyReports;
+  const allReports = saved.length ? saved : clientId ? [] : weeklyReports;
   const report = allReports.find((r) => r.id === weekId) ?? allReports[0] ?? null;
 
   useEffect(() => {
     if (!user) return;
-    void listWeeklyReports(user.id)
+    void listWeeklyReports(user.id, clientId)
       .then((rows) => {
         setSaved(rows);
         if (rows[0]) setWeekId(rows[0].id);
-        else setWeekId(weeklyReports[0]?.id ?? "");
+        else setWeekId(clientId ? "" : weeklyReports[0]?.id ?? "");
       })
       .catch(() => setSaved([]));
-  }, [user]);
+  }, [user, clientId]);
 
   const chartData = useMemo(
     () =>
@@ -150,7 +157,8 @@ function ReportsPage() {
       weekLabel: String(data.get("weekLabel") || `${startDate} – ${endDate}`),
       startDate,
       endDate,
-      client: String(data.get("client") || user.agency),
+      client: String(data.get("client") || activeClient?.name || user.agency),
+      clientId,
       networks: [],
       posts: [],
       highlights,
@@ -158,10 +166,13 @@ function ReportsPage() {
     };
     setSavingReport(true);
     try {
-      await saveWeeklyReport(created, user.id);
+      await saveWeeklyReport(created, user.id, clientId);
       setSaved((prev) => [created, ...prev]);
       setWeekId(created.id);
-      (e.target as HTMLFormElement).reset();
+      const form = e.target as HTMLFormElement;
+      form.reset();
+      const clientInput = form.elements.namedItem("client") as HTMLInputElement | null;
+      if (clientInput) clientInput.value = activeClient?.name || user.agency;
       toast.success("Reporte semanal creado");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo crear el reporte");
@@ -223,12 +234,17 @@ function ReportsPage() {
       title="Reportes semanales"
       description="Crea un reporte por periodo y carga el desempeño de cada publicación y red social."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-6 xl:grid-cols-2">
         <form
           onSubmit={onCreateReport}
           className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
           <h2 className="font-semibold">Crear reporte semanal</h2>
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/reports", search: { client: id } })}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="weekLabel">Etiqueta de la semana</Label>
@@ -236,7 +252,13 @@ function ReportsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="client">Cliente / marca</Label>
-              <Input id="client" name="client" defaultValue={user?.agency} required />
+              <Input
+                id="client"
+                name="client"
+                key={activeClient?.id || "client-name"}
+                defaultValue={activeClient?.name || user?.agency}
+                required
+              />
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">

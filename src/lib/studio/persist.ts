@@ -18,6 +18,7 @@ const REPORTS_KEY = "cmia.reports.v1";
 
 export interface SavedCopy extends GeneratedCopy {
   userId: string;
+  clientId?: string;
   brand: string;
   network: SocialNetwork;
   topic: string;
@@ -29,6 +30,7 @@ export interface SavedCopy extends GeneratedCopy {
 
 export interface SavedScript extends GeneratedScript {
   userId: string;
+  clientId?: string;
   brand: string;
   format: string;
   duration: string;
@@ -57,7 +59,13 @@ function writeLocal<T>(key: string, value: T[]) {
 
 function isMissingTable(error: { code?: string; message?: string } | null) {
   if (!error) return false;
-  return error.code === "PGRST205" || error.message?.includes("schema cache") === true;
+  return (
+    error.code === "PGRST205" ||
+    error.code === "PGRST204" ||
+    error.message?.includes("schema cache") === true ||
+    error.message?.includes("client_id") === true ||
+    error.message?.toLowerCase().includes("does not exist") === true
+  );
 }
 
 async function currentUserId() {
@@ -122,10 +130,16 @@ export function autoInsights(posts: PostPerformance[]) {
   };
 }
 
-export async function saveGeneratedCopies(req: CopyRequest, copies: GeneratedCopy[], userId: string) {
+export async function saveGeneratedCopies(
+  req: CopyRequest,
+  copies: GeneratedCopy[],
+  userId: string,
+  clientId?: string,
+) {
   const rows: SavedCopy[] = copies.map((copy) => ({
     ...copy,
     userId,
+    clientId,
     brand: req.brand,
     network: req.network,
     topic: req.topic,
@@ -141,6 +155,7 @@ export async function saveGeneratedCopies(req: CopyRequest, copies: GeneratedCop
       rows.map((row) => ({
         id: row.id,
         user_id: userId,
+        client_id: clientId || null,
         brand: row.brand,
         network: row.network,
         topic: row.topic,
@@ -162,15 +177,17 @@ export async function saveGeneratedCopies(req: CopyRequest, copies: GeneratedCop
   return rows;
 }
 
-export async function listSavedCopies(userId: string): Promise<SavedCopy[]> {
+export async function listSavedCopies(userId: string, clientId?: string): Promise<SavedCopy[]> {
   if (isSupabaseConfigured()) {
     const supabase = getSupabase();
-    const { data, error } = await supabase
+    let query = supabase
       .from("post_copies")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(30);
+    if (clientId) query = query.eq("client_id", clientId);
+    const { data, error } = await query;
     if (!error && data) {
       return data.map((row) => ({
         id: row.id,
@@ -180,6 +197,7 @@ export async function listSavedCopies(userId: string): Promise<SavedCopy[]> {
         cta: row.cta,
         notes: row.notes,
         userId: row.user_id,
+        clientId: row.client_id ?? undefined,
         brand: row.brand,
         network: row.network,
         topic: row.topic,
@@ -191,13 +209,21 @@ export async function listSavedCopies(userId: string): Promise<SavedCopy[]> {
     }
     if (error && !isMissingTable(error)) throw new Error(error.message);
   }
-  return readLocal<SavedCopy>(COPIES_KEY).filter((c) => c.userId === userId);
+  return readLocal<SavedCopy>(COPIES_KEY).filter(
+    (c) => c.userId === userId && (!clientId || c.clientId === clientId),
+  );
 }
 
-export async function saveGeneratedScript(req: ScriptRequest, script: GeneratedScript, userId: string) {
+export async function saveGeneratedScript(
+  req: ScriptRequest,
+  script: GeneratedScript,
+  userId: string,
+  clientId?: string,
+) {
   const row: SavedScript = {
     ...script,
     userId,
+    clientId,
     brand: req.brand,
     format: req.format,
     duration: req.duration,
@@ -210,6 +236,7 @@ export async function saveGeneratedScript(req: ScriptRequest, script: GeneratedS
     const { error } = await supabase.from("video_scripts").insert({
       id: row.id,
       user_id: userId,
+      client_id: clientId || null,
       brand: row.brand,
       format: row.format,
       duration: row.duration,
@@ -232,15 +259,17 @@ export async function saveGeneratedScript(req: ScriptRequest, script: GeneratedS
   return row;
 }
 
-export async function listSavedScripts(userId: string): Promise<SavedScript[]> {
+export async function listSavedScripts(userId: string, clientId?: string): Promise<SavedScript[]> {
   if (isSupabaseConfigured()) {
     const supabase = getSupabase();
-    const { data, error } = await supabase
+    let query = supabase
       .from("video_scripts")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(20);
+    if (clientId) query = query.eq("client_id", clientId);
+    const { data, error } = await query;
     if (!error && data) {
       return data.map((row) => ({
         id: row.id,
@@ -251,6 +280,7 @@ export async function listSavedScripts(userId: string): Promise<SavedScript[]> {
         caption: row.caption,
         hashtags: row.hashtags ?? [],
         userId: row.user_id,
+        clientId: row.client_id ?? undefined,
         brand: row.brand,
         format: row.format,
         duration: row.duration,
@@ -260,17 +290,20 @@ export async function listSavedScripts(userId: string): Promise<SavedScript[]> {
     }
     if (error && !isMissingTable(error)) throw new Error(error.message);
   }
-  return readLocal<SavedScript>(SCRIPTS_KEY).filter((s) => s.userId === userId);
+  return readLocal<SavedScript>(SCRIPTS_KEY).filter(
+    (s) => s.userId === userId && (!clientId || s.clientId === clientId),
+  );
 }
 
-export async function saveWeeklyReport(report: WeeklyReport, userId: string) {
-  const stored = { ...report };
+export async function saveWeeklyReport(report: WeeklyReport, userId: string, clientId?: string) {
+  const stored = { ...report, clientId: clientId || report.clientId };
 
   if (isSupabaseConfigured()) {
     const supabase = getSupabase();
     const { error } = await supabase.from("weekly_reports").insert({
       id: stored.id,
       user_id: userId,
+      client_id: clientId || report.clientId || null,
       week_label: stored.weekLabel,
       start_date: stored.startDate,
       end_date: stored.endDate,
@@ -310,14 +343,16 @@ export async function saveWeeklyReport(report: WeeklyReport, userId: string) {
   return stored;
 }
 
-export async function listWeeklyReports(userId: string): Promise<WeeklyReport[]> {
+export async function listWeeklyReports(userId: string, clientId?: string): Promise<WeeklyReport[]> {
   if (isSupabaseConfigured()) {
     const supabase = getSupabase();
-    const { data, error } = await supabase
+    let query = supabase
       .from("weekly_reports")
       .select("*")
       .eq("user_id", userId)
       .order("start_date", { ascending: false });
+    if (clientId) query = query.eq("client_id", clientId);
+    const { data, error } = await query;
     if (!error && data) {
       const ids = data.map((r) => r.id);
       const { data: posts } = ids.length
@@ -350,6 +385,7 @@ export async function listWeeklyReports(userId: string): Promise<WeeklyReport[]>
           startDate: row.start_date,
           endDate: row.end_date,
           client: row.client,
+          clientId: row.client_id ?? undefined,
           posts: reportPosts,
           networks: buildNetworkSummaries(reportPosts),
           highlights: row.highlights ?? [],
@@ -361,7 +397,10 @@ export async function listWeeklyReports(userId: string): Promise<WeeklyReport[]>
   }
 
   return readLocal<WeeklyReport & { userId?: string }>(REPORTS_KEY)
-    .filter((r) => !r.userId || r.userId === userId)
+    .filter(
+      (r) =>
+        (!r.userId || r.userId === userId) && (!clientId || r.clientId === clientId),
+    )
     .map(({ userId: _u, ...report }) => report);
 }
 

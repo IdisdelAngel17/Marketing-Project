@@ -1,11 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { CalendarDays, Download, Loader2, Sparkles } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CopyButton } from "@/components/app/copy-button";
+import { ClientPicker, ClientWorkBanner, useAgencyClients } from "@/components/crm/client-picker";
+import { useAuth } from "@/lib/auth/auth-context";
+import { clientSearchSchema } from "@/lib/crm/search";
+import { saveClientCalendar } from "@/lib/crm/store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,6 +51,7 @@ import {
 } from "@/lib/types/studio";
 
 export const Route = createFileRoute("/app/calendario")({
+  validateSearch: clientSearchSchema,
   head: () => ({
     meta: [{ title: "Calendario de posts | Community Manager IA" }],
   }),
@@ -56,6 +61,11 @@ export const Route = createFileRoute("/app/calendario")({
 const ALL_NETWORKS = Object.keys(NETWORK_LABELS) as SocialNetwork[];
 
 function CalendarPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { client: clientId } = Route.useSearch();
+  const { selected } = useAgencyClients();
+  const activeClient = selected(clientId);
   const [goal, setGoal] = useState<CopyGoal>("engagement");
   const [tone, setTone] = useState<Tone>("cercano");
   const [days, setDays] = useState<7 | 14 | 30>(14);
@@ -67,6 +77,12 @@ function CalendarPage() {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<ContentCalendar | null>(null);
   const [activeNetwork, setActiveNetwork] = useState<SocialNetwork>("instagram");
+
+  useEffect(() => {
+    if (!activeClient?.networks.length) return;
+    const nets = [...new Set(activeClient.networks.map((n) => n.network))];
+    setNetworks(nets);
+  }, [activeClient?.id]);
 
   const totalPosts = useMemo(
     () => calendar?.networks.reduce((acc, n) => acc + n.posts.length, 0) ?? 0,
@@ -98,7 +114,14 @@ function CalendarPage() {
       });
       setCalendar(result);
       setActiveNetwork(result.networks[0]?.network ?? "instagram");
-      toast.success(`Calendario listo: ${result.networks.length} redes`);
+      if (user && clientId) {
+        await saveClientCalendar(user.id, clientId, result);
+      }
+      toast.success(
+        clientId
+          ? `Calendario guardado en el CRM (${result.networks.length} redes)`
+          : `Calendario listo: ${result.networks.length} redes`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar");
     } finally {
@@ -125,11 +148,16 @@ function CalendarPage() {
       title="Calendario de posts"
       description="Genera un plan editorial por perfil y por cada red social seleccionada."
     >
+      <ClientWorkBanner client={activeClient} />
       <div className="grid gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)]">
         <form
           onSubmit={onSubmit}
           className="h-fit space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm"
         >
+          <ClientPicker
+            value={clientId}
+            onChange={(id) => void navigate({ to: "/app/calendario", search: { client: id } })}
+          />
           <div className="flex items-center gap-3">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/40">
               <CalendarDays className="h-5 w-5 text-primary-foreground" />
@@ -149,7 +177,8 @@ function CalendarPage() {
                 id="profileName"
                 name="profileName"
                 required
-                defaultValue="Marca Demo"
+                key={activeClient?.id || "profileName"}
+                defaultValue={activeClient?.brand || activeClient?.name || "Marca Demo"}
                 placeholder="Ej. Estudio Norte"
               />
             </div>
@@ -158,7 +187,8 @@ function CalendarPage() {
               <Input
                 id="handle"
                 name="handle"
-                defaultValue="marca.demo"
+                key={`${activeClient?.id || "h"}-handle`}
+                defaultValue={activeClient?.networks[0]?.handle || "marca.demo"}
                 placeholder="sin @"
               />
             </div>
@@ -169,7 +199,8 @@ function CalendarPage() {
             <Input
               id="niche"
               name="niche"
-              defaultValue="agencias y community managers"
+              key={`${activeClient?.id || "niche"}-n`}
+              defaultValue={activeClient?.industry || "agencias y community managers"}
               placeholder="Ej. clínicas dentales"
             />
           </div>
